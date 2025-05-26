@@ -122,7 +122,7 @@ const slot = updated[modal.dayIndex][modal.section];
                           onClick={() => removePinFromSchedule(idx, section, i)}
                           style={{ marginLeft: '0.5rem' }}
                         >
-                          Remove {/* <-- Added Remove button */}
+                          Remove {}
                         </button>
                       </li>
                     ))}
