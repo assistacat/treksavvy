@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
+import requests
+import os
 
 # for frontend
 app = Flask(__name__)
@@ -61,3 +63,52 @@ def import_pins():
     
     except Exception:
         return (jsonify({"error": "invalid file"}), 500)
+    
+# filter system
+@app.route('/api/discover', methods=['GET'])
+def discover_places():
+        lat = request.args.get('lat')
+        lng = request.args.get('lng')
+        radius = request.args.get('radius', 3000) #range of finder can be edited
+        min_rating = float(request.args.get('min_rating', 0))
+        min_reviews = int(request.args.get('min_reviews', 0))
+
+        if not lat or not lng:
+            return (jsonify({"error": "missing lat or lng"}), 400)
+        
+        try:
+            endpoint = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+            params = {
+                "location": f"{lat},{lng}",
+                "radius": radius,
+                "key": "AIzaSyCNH9UJ-VEyJzfkX1SKwMb9K-8PDMsYvT0",
+            }
+
+            response = requests.get(endpoint, params=params)
+            data = response.json()
+
+            if "results" not in data:
+                return (jsonify({"error": "no results from google places api"}), 500)
+            
+            filtered = []
+            for place in data["results"]:
+                rating = place.get("rating", 0)
+                reviews = place.get("user_ratings_total", 0)
+
+                if rating >= min_rating and reviews >= min_reviews:
+                    filtered.append({
+                        "name": place.get("name"),
+                        "lat": place["geometry"]["location"]["lat"],
+                        "lng": place["geometry"]["location"]["lng"],
+                        "rating": rating,
+                        "reviews": reviews,
+                        "type": place.get("types", [])
+                    })
+            
+            return (jsonify({"places": filtered}), 200)
+        
+        except Exception:
+            return (jsonify({"error": "something went wrong while searching for places"}), 500)
+
+        
+
