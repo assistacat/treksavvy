@@ -1,0 +1,13 @@
+# React
+client/node_modules/
+client/build/
+
+# Python
+server/venv/
+__pycache__/
+
+# OS
+.DS_Store
+
+# Environment
+.env

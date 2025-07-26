@@ -1,0 +1,209 @@
+/* DEFAULT FORMAT */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background: #fff;
+  color: #333;
+}
+
+button {
+  background: #ccc;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* INITIAL PAGE */
+.initial-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+}
+.initial-page .date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.initial-page .date-inputs label {
+  font-weight: bold;
+}
+.initial-page .date-inputs input {
+  width: 140px;
+  padding: 8px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+.initial-page .create-button {
+  text-align: center;
+}
+.initial-page .create-button button {
+  padding: 12px 24px;
+  font-size: 1em;
+}
+
+/* FIND LOCATION PAGE */
+.find-location-page {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.find-location-page .filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 20px;
+}
+.find-location-page .filters .row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.find-location-page .filters .row label {
+  font-weight: bold;
+}
+.find-location-page .filters .row input {
+  padding: 6px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  width: 160px;
+}
+.find-location-page .filters .row button {
+  margin-top: 0;
+}
+.find-location-page .results {
+  width: 100%;
+  margin-top: 20px;
+}
+.find-location-page .results .location-card {
+  width: 100%;
+  margin: 10px auto;
+}
+.find-location-page .back-button-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* ADD LOCATION PAGE */
+.add-location-page {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.add-location-page .location-card {
+  width: 100%;
+  margin: 10px auto;
+}
+
+/* SCHEDULE PAGE */
+.schedule-page {
+  padding: 20px;
+  width: 80%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+/* FIND LOCATION BUTTON */
+.find-button-container {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 20px;
+}
+/* SAVE / LOAD / CLEAR BUTTONS */
+.save-load-clear-container {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.save-load-clear-container button {
+  margin: 0 6px;
+}
+
+.schedule-page h3 {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 1.2em;
+}
+.day-schedule {
+  padding: 20px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.slot-section {
+  width: 100%;
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin: 10px 0;
+  text-align: center;
+  box-sizing: border-box;
+}
+.slot-section h4 {
+  margin-bottom: 10px;
+}
+.slot-section > button {
+  display: inline-block;
+  margin: 10px auto;
+}
+.slot-section .location-card {
+  width: calc(100% - 30px);
+  margin: 10px auto;
+  text-align: left;
+}
+
+/* LOCATION CARD */
+.location-card {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 4px;
+  background: #fafafa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.location-card-content {
+  flex: 1;
+}
+
+.location-card-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.location-card-line {
+  margin-bottom: 4px;
+}
+
+.location-card-buttons-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.find-location-page .starting-location-card {
+  width: 100%;
+  margin: 10px auto 20px;
+}
+
+.find-location-page .starting-location-card .location-card {
+  width: 100%;
+  margin: 10px auto;
+}

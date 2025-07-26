@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Holiday</title>
+    <style>
+      /* fill the entire viewport */
+      html, body, #map {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+
+    <!-- load Google Maps JavaSript API -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2puwBvOyDwYbO6fQW2Ms1SUhngjP908"
+    ></script>
+
+    <script>
+      async function initMap() {
+        // center map over Singapore
+        const center = { lat: 1.3521, lng: 103.8198 };
+        const map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 11,
+          center: center,
+        });
+
+        // fetch the GeoJSON just populated on the server
+        try {
+          const res = await fetch(`${window.location.origin}/api/export/geojson`);
+          if (!res.ok) throw new Error(res.statusText);
+          const geojson = await res.json();
+
+          // add a location marker for each feature
+          geojson.features.forEach(feature => {
+            const [lng, lat] = feature.geometry.coordinates;
+            new google.maps.Marker({
+              position: { lat, lng },
+              map: map,
+              title: feature.properties.name,
+            });
+          });
+        } catch (e) {
+          console.error("Failed to load GeoJSON:", e);
+          alert("Could not load schedule pins.");
+        }
+      }
+
+      window.addEventListener("load", initMap);
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>
