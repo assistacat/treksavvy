@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import requests
@@ -6,8 +6,12 @@ import os
 
 itinerary_storage = []
 
-# for frontend
-app = Flask(__name__)
+# serve React build as static files
+app = Flask(
+    __name__,
+    static_folder="../client/build",
+    static_url_path=""
+)
 CORS(app)
 
 # store pins
@@ -24,7 +28,6 @@ def add_pin():
     new_pin = request.get_json()
     if not new_pin or 'lat' not in new_pin or 'lng' not in new_pin:
         return jsonify({"error": "invalid pin data"}), 400
-
     pin_storage.append(new_pin)
     return jsonify({"status": "success", "pin": new_pin}), 201
 
@@ -45,7 +48,6 @@ def import_pins():
     file = request.files.get('file')
     if not file:
         return jsonify({"error": "no file uploaded"}), 400
-
     try:
         data = json.loads(file.read())
         for pin in data.get('pins', []):
@@ -53,7 +55,6 @@ def import_pins():
                 if not any(p['lat'] == pin['lat'] and p['lng'] == pin['lng'] for p in pin_storage):
                     pin_storage.append(pin)
         return jsonify({"message": "pins imported!"}), 200
-
     except Exception:
         return jsonify({"error": "invalid file"}), 500
 
@@ -71,10 +72,7 @@ def discover_places():
     if not lat or not lng:
         return jsonify({"error": "missing lat or lng"}), 400
 
-    # load API key from environment
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "AIzaSyBP2puwBvOyDwYbO6fQW2Ms1SUhngjP908")
-
-    # build request params
     params = {
         "location": f"{lat},{lng}",
         "radius":   radius,
@@ -85,7 +83,6 @@ def discover_places():
     if name_filter:
         params["keyword"] = name_filter
 
-    # DEBUGGING: print the Google API key and the outgoing params
     print("Using Google API key:", api_key)
     print("Outgoing params:", params)
 
@@ -94,7 +91,6 @@ def discover_places():
         resp = requests.get(endpoint, params=params)
         data = resp.json()
 
-        # DEBUGGING: print the raw Google response
         print("Raw Google response:", data)
 
         if "results" not in data:
@@ -119,7 +115,6 @@ def discover_places():
     except Exception as e:
         print("Error in /api/discover:", e)
         return jsonify({"error": "something went wrong while searching for places"}), 500
-    
 
 # address -> lat/lng (smart discovery support)
 @app.route('/api/geocode', methods=['GET'])
@@ -130,7 +125,6 @@ def geocode_address():
 
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "AIzaSyBP2puwBvOyDwYbO6fQW2Ms1SUhngjP908")
     endpoint = "https://maps.googleapis.com/maps/api/geocode/json"
-
     params = {
         "address": address,
         "key": api_key
@@ -140,7 +134,6 @@ def geocode_address():
         resp = requests.get(endpoint, params=params)
         data = resp.json()
 
-        # DEBUGGING: print raw geocode results
         print("Geocode response:", data)
 
         if not data["results"]:
@@ -155,12 +148,12 @@ def geocode_address():
     except Exception as e:
         print("Error in /api/geocode:", e)
         return jsonify({"error": "something went wrong during geocoding"}), 500
-    
+
 @app.route('/api/smart-add', methods=['GET'])
 def smart_add():
     lat = request.args.get('lat')
     lng = request.args.get('lng')
-    radius = request.args.get('radius', 1000)  # default 1000m
+    radius = request.args.get('radius', 1000)
     min_rating = float(request.args.get('min_rating', 0))
     min_reviews = int(request.args.get('min_reviews', 0))
 
@@ -169,7 +162,6 @@ def smart_add():
 
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "AIzaSyBP2puwBvOyDwYbO6fQW2Ms1SUhngjP908")
     endpoint = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-
     params = {
         "location": f"{lat},{lng}",
         "radius": radius,
@@ -197,7 +189,6 @@ def smart_add():
                     "reviews": reviews,
                     "type": place.get("types", [])
                 }
-                # avoid duplicates
                 if not any(p["lat"] == pin["lat"] and p["lng"] == pin["lng"] for p in pin_storage):
                     pin_storage.append(pin)
                     added.append(pin)
@@ -250,13 +241,11 @@ def export_geojson():
         "type": "FeatureCollection",
         "features": features
     }
-
     return jsonify(geojson), 200
 
 # store activity blocks
 activity_blocks = []
 
-# create new activity block
 @app.route('/api/blocks', methods=['POST'])
 def create_block():
     data = request.get_json()
@@ -266,30 +255,23 @@ def create_block():
     if not name or not pins:
         return jsonify({"error": "missing name or pins"}), 400
 
-    # validate all pins have lat/lng
     for pin in pins:
         if 'lat' not in pin or 'lng' not in pin:
             return jsonify({"error": "each pin must have lat and lng"}), 400
 
-    block = {
-        "name": name,
-        "pins": pins
-    }
+    block = {"name": name, "pins": pins}
     activity_blocks.append(block)
     return jsonify({"status": "block created", "block": block}), 201
 
-# get all activity blocks
 @app.route('/api/blocks', methods=['GET'])
 def get_blocks():
     return jsonify(activity_blocks), 200
 
-# delete all activity blocks
 @app.route('/api/blocks', methods=['DELETE'])
 def clear_blocks():
     activity_blocks.clear()
     return jsonify({"status": "all blocks cleared"}), 200
 
-# add a custom pin (manual block)
 @app.route('/api/custom-pin', methods=['POST'])
 def add_custom_pin():
     data = request.get_json()
@@ -300,12 +282,7 @@ def add_custom_pin():
     if not name:
         return jsonify({"error": "missing name for custom pin"}), 400
 
-    custom_pin = {
-        "name": name,
-        "custom": True  # flag it
-    }
-
-    # optional lat/lng
+    custom_pin = {"name": name, "custom": True}
     if lat is not None and lng is not None:
         custom_pin["lat"] = lat
         custom_pin["lng"] = lng
@@ -313,34 +290,35 @@ def add_custom_pin():
     pin_storage.append(custom_pin)
     return jsonify({"status": "custom pin added", "pin": custom_pin}), 201
 
-# save itinerary
 @app.route('/api/itinerary', methods=['POST'])
 def save_itinerary():
     data = request.get_json()
     if not isinstance(data, list):
         return jsonify({"error": "invalid itinerary format"}), 400
-
-    # overwrite
     itinerary_storage.clear()
     itinerary_storage.extend(data)
-
     return jsonify({"status": "itinerary saved", "items": len(itinerary_storage)}), 200
 
-# get saved itinerary
 @app.route('/api/itinerary', methods=['GET'])
 def get_itinerary():
     return jsonify(itinerary_storage), 200
 
-# clear itinerary
 @app.route('/api/itinerary', methods=['DELETE'])
 def clear_itinerary():
     itinerary_storage.clear()
     return jsonify({"status": "itinerary cleared"}), 200
 
+# catch-all to serve React's index.html for any non-/api path
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     # bind to whatever port Railway injects, defaulting to 5000 locally
     port = int(os.environ.get('PORT', 5000))
-    # you can also control debug via FLASK_DEBUG env var if you like
     debug = os.environ.get('FLASK_DEBUG', 'false').lower() in ('1', 'true', 'yes')
     app.run(host='0.0.0.0', port=port, debug=debug)
+
