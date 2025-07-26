@@ -3,6 +3,7 @@ from flask_cors import CORS
 import json
 import requests
 import os
+
 itinerary_storage = []
 
 # for frontend
@@ -120,7 +121,7 @@ def discover_places():
         return jsonify({"error": "something went wrong while searching for places"}), 500
     
 
- # address -> lat/lng (smart discovery support)
+# address -> lat/lng (smart discovery support)
 @app.route('/api/geocode', methods=['GET'])
 def geocode_address():
     address = request.args.get('address')
@@ -336,6 +337,10 @@ def clear_itinerary():
     itinerary_storage.clear()
     return jsonify({"status": "itinerary cleared"}), 200
 
-# set TCP port to 5000
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # bind to whatever port Railway injects, defaulting to 5000 locally
+    port = int(os.environ.get('PORT', 5000))
+    # you can also control debug via FLASK_DEBUG env var if you like
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() in ('1', 'true', 'yes')
+    app.run(host='0.0.0.0', port=port, debug=debug)
