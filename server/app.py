@@ -3,6 +3,10 @@ from flask_cors import CORS
 import json
 import requests
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).with_name(".env"))
 
 itinerary_storage = []
 
@@ -21,6 +25,16 @@ pin_storage = []
 @app.route('/api/test')
 def test():
     return jsonify({"front": "back"}), 200
+
+# Only the separately restricted public browser key is exposed here.
+@app.route('/api/maps-config')
+def maps_config():
+    browser_key = os.environ.get('GOOGLE_MAPS_BROWSER_API_KEY', '').strip()
+    if not browser_key:
+        return jsonify({"error": "Google Maps browser map is not configured"}), 503
+    response = jsonify({"browserApiKey": browser_key})
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 # add new pin
 @app.route('/api/pins', methods=['POST'])
@@ -72,7 +86,9 @@ def discover_places():
     if not lat or not lng:
         return jsonify({"error": "missing lat or lng"}), 400
 
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "AIzaSyBP2puwBvOyDwYbO6fQW2Ms1SUhngjP908")
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
+    if not api_key:
+        return jsonify({"error": "Google Maps service is not configured"}), 503
     params = {
         "location": f"{lat},{lng}",
         "radius":   radius,
@@ -83,15 +99,12 @@ def discover_places():
     if name_filter:
         params["keyword"] = name_filter
 
-    print("Using Google API key:", api_key)
-    print("Outgoing params:", params)
 
     try:
         endpoint = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
         resp = requests.get(endpoint, params=params)
         data = resp.json()
 
-        print("Raw Google response:", data)
 
         if "results" not in data:
             return jsonify({"error": "no results from google places api"}), 500
@@ -112,8 +125,7 @@ def discover_places():
 
         return jsonify({"places": filtered}), 200
 
-    except Exception as e:
-        print("Error in /api/discover:", e)
+    except Exception:
         return jsonify({"error": "something went wrong while searching for places"}), 500
 
 # address -> lat/lng (smart discovery support)
@@ -123,7 +135,9 @@ def geocode_address():
     if not address:
         return jsonify({"error": "missing address parameter"}), 400
 
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "AIzaSyBP2puwBvOyDwYbO6fQW2Ms1SUhngjP908")
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
+    if not api_key:
+        return jsonify({"error": "Google Maps service is not configured"}), 503
     endpoint = "https://maps.googleapis.com/maps/api/geocode/json"
     params = {
         "address": address,
@@ -134,7 +148,6 @@ def geocode_address():
         resp = requests.get(endpoint, params=params)
         data = resp.json()
 
-        print("Geocode response:", data)
 
         if not data["results"]:
             return jsonify({"error": "no results found for address"}), 404
@@ -145,8 +158,7 @@ def geocode_address():
             "lng": location["lng"]
         }), 200
 
-    except Exception as e:
-        print("Error in /api/geocode:", e)
+    except Exception:
         return jsonify({"error": "something went wrong during geocoding"}), 500
 
 @app.route('/api/smart-add', methods=['GET'])
@@ -160,7 +172,9 @@ def smart_add():
     if not lat or not lng:
         return jsonify({"error": "missing lat or lng"}), 400
 
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "AIzaSyBP2puwBvOyDwYbO6fQW2Ms1SUhngjP908")
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
+    if not api_key:
+        return jsonify({"error": "Google Maps service is not configured"}), 503
     endpoint = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
     params = {
         "location": f"{lat},{lng}",
@@ -195,8 +209,7 @@ def smart_add():
 
         return jsonify({"status": "smart added", "added_pins": added}), 200
 
-    except Exception as e:
-        print("Error in /api/smart-add:", e)
+    except Exception:
         return jsonify({"error": "something went wrong during smart add"}), 500
 
 @app.route('/api/export/kml', methods=['GET'])

@@ -12,10 +12,6 @@
       }
     </style>
 
-    <!-- load Google Maps JavaSript API -->
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2puwBvOyDwYbO6fQW2Ms1SUhngjP908"
-    ></script>
 
     <script>
       async function initMap() {
@@ -47,7 +43,29 @@
         }
       }
 
-      window.addEventListener("load", initMap);
+      async function loadMap() {
+        try {
+          const response = await fetch('/api/maps-config', { cache: 'no-store' });
+          if (!response.ok) throw new Error('Map configuration unavailable');
+          const config = await response.json();
+          if (!config.browserApiKey) throw new Error('Browser key unavailable');
+          const script = document.createElement('script');
+          script.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+            encodeURIComponent(config.browserApiKey) + '&callback=initMap';
+          script.async = true;
+          script.onerror = showMapError;
+          document.head.appendChild(script);
+        } catch (_) {
+          showMapError();
+        }
+      }
+
+      function showMapError() {
+        document.getElementById('map').textContent =
+          'Map unavailable. Configure the restricted browser Maps API key.';
+      }
+
+      window.addEventListener("load", loadMap);
     </script>
   </head>
   <body>
